@@ -24,7 +24,11 @@ class RNBixolonPrinterModule(
      * Runs a Bluetooth scan looking for the fist device
      * which name includes [BixolonPrinter.TARGET_DEVICE_NAME]
      *
+     * Prequesties:
+     * - Pair the device using Android Bluetooth settings.
+     *
      * @see [BixolonPrinter.getTargetDevice]
+     * @param callback { isSuccess: Boolean, error: String, isDeviceAvailable: Boolean }
      */
     @ReactMethod
     fun isDeviceAvailable(callback: Callback) {
@@ -40,8 +44,14 @@ class RNBixolonPrinterModule(
     /**
      * Manually connect to specified printer.
      *
+     * Prequesties:
+     * - Pair the device using Android Bluetooth settings.
+     *
+     * Always close down the connection before reconnecting to the device again.
+     *
      * @param logicalName Bluetooth device name e.g. SPP-R410
      * @param address Bluetooth device address e.g. 74:F0:7D:E9:8C:B8
+     * @param callback { isSuccess: Boolean, error: String }
      */
     @ReactMethod
     fun connect(logicalName: String, address: String, callback: Callback) {
@@ -60,7 +70,13 @@ class RNBixolonPrinterModule(
     /**
      * Auto-connect with compatible device.
      *
+     * Prequesties:
+     * - Pair the device using Android Bluetooth settings.
+     *
+     * Always close down the connection before reconnecting to the device again.
+     *
      * @see [BixolonPrinter.getTargetDevice]
+     * @param callback { isSuccess: Boolean, error: String }
      */
     @ReactMethod
     fun autoConnect(callback: Callback) {
@@ -74,6 +90,13 @@ class RNBixolonPrinterModule(
         }
     }
 
+    /**
+     * Prints the first page of the PDF file.
+     *
+     * @param pdfPath full path to the pdf file on the Android device.
+     * @param brightness value from 0 to 100. Default is 50.
+     * @param callback { isSuccess: Boolean, error: String }
+     */
     @ReactMethod
     fun printPdf(pdfPath: String, brightness: Int, callback: Callback) {
         val session = activePrinterSession
@@ -83,6 +106,14 @@ class RNBixolonPrinterModule(
             GlobalScope.launch {
                 val result = session.printPdf(
                         filePath = pdfPath,
+                        // Only the first page will be printed, thus PDF file with more than one page
+                        // aren't supported.
+                        //
+                        // Native library doesn't expose a official way to print all pdf pages, but
+                        // it does provide a method with range params(fromPage, toPage). It could be
+                        // posible when giving starting page of 0 and end page of Int.MAX it would
+                        // print the whole document, but it's equalily posible that it will print
+                        // a few bilion pages.
                         page = 0,
                         alignment = Alignment.Left,
                         brightness = brightness
@@ -92,6 +123,11 @@ class RNBixolonPrinterModule(
         }
     }
 
+    /**
+     * Close down the printer session.
+     *
+     * @param callback { isSuccess: Boolean, error: String }
+     */
     @ReactMethod
     fun disconnect(callback: Callback) {
         val session = activePrinterSession
