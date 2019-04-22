@@ -32,9 +32,16 @@ class BixolonPrinterSession(val posPrinter: POSPrinter) {
         return Result.success(Unit)
     }
 
+    /**
+     * @param filePath the absolute path to the pdf file.
+     * @param page the page number of the PDF to be printed.
+     * @param alignment select an enum value.
+     * @param brightness the brightness value(0..100). Note that 100 will print the whole page black.
+     */
     fun printPdf(
             filePath: String,
             page: Int = 0,
+            alignment: Alignment = Alignment.Left,
             brightness: Int = 50,
             callback: (Result<Unit>) -> Unit
     ) {

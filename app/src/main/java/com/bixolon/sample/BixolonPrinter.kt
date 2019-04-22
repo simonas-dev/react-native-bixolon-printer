@@ -15,9 +15,31 @@ import kotlinx.coroutines.launch
 
 class BixolonPrinter {
 
+    /**
+     * Runs a Bluetooth scan looking for a device which name includes string [TARGET_DEVICE_NAME].
+     *
+     * If multiple devices are found the first in the list will be selected for the process.
+     *
+     */
+    private fun getTargetDevice(): BluetoothDevice? {
+        return BluetoothAdapter.getDefaultAdapter()
+                .bondedDevices
+                .find { it.name.contains(TARGET_DEVICE_NAME.value) }
+    }
+
+
+    suspend fun isDeviceAvailable(): Boolean {
+        return getTargetDevice() != null
+    }
+
+    /**
+     * Tries to open a session with [getTargetDevice].
+     *
+     * @param receiver Logs various information about [POSPrinter] status. Isn't required!
+     */
     fun autoOpen(
             context: Context,
-            receiver: PrinterStatusReceiver,
+            receiver: PrinterStatusReceiver?,
             callback: (Result<BixolonPrinterSession>) -> Unit
     ) {
        GlobalScope.launch(Dispatchers.IO) {
@@ -25,14 +47,12 @@ class BixolonPrinter {
        }
     }
 
+
     suspend fun autoOpen(
             context: Context,
-            receiver: PrinterStatusReceiver
+            receiver: PrinterStatusReceiver?
     ): Result<BixolonPrinterSession> {
-
-        val bluetoothAdapter = BluetoothAdapter.getDefaultAdapter()
-        val device: BluetoothDevice? = bluetoothAdapter.bondedDevices
-                .find { it.name.contains(TARGET_DEVICE_NAME.value) }
+        val device = getTargetDevice()
         return if (device != null) {
             open(context, receiver, device.name, device.address)
         } else {
@@ -40,9 +60,20 @@ class BixolonPrinter {
         }
     }
 
+    /**
+     * Open Printer Session
+     *
+     * It Initiates the use of printer class and includes initialization operations such as memory
+     * allocation. It must be first performed to call a Method above Claim. Devices not saved via
+     * the BXLConfigLoader Class will not be opened.
+     *
+     * @param receiver Logs various information about [POSPrinter] status. Isn't required!
+     * @param logicalName Bluetooth device name e.g. SPP-R410
+     * @param address Bluetooth device address e.g. 74:F0:7D:E9:8C:B8
+     */
     fun open(
             context: Context,
-            receiver: PrinterStatusReceiver,
+            receiver: PrinterStatusReceiver?,
             logicalName: String,
             address: String,
             callback: (Result<BixolonPrinterSession>) -> Unit
@@ -52,15 +83,9 @@ class BixolonPrinter {
         }
     }
 
-    /**
-     * Open Printer Session
-     *
-     * @param logicalName Bluetooth Device Name e.g. SPP-R410
-     * @param address Bluetooth Device Address e.g. 74:F0:7D:E9:8C:B8
-     */
     suspend fun open(
             context: Context,
-            receiver: PrinterStatusReceiver,
+            receiver: PrinterStatusReceiver?,
             logicalName: String,
             address: String
     ): Result<BixolonPrinterSession> {
@@ -100,22 +125,36 @@ class BixolonPrinter {
         return Result.success(BixolonPrinterSession(posPrinter))
     }
 
+    /**
+     * This is a class for POS printer control. Using this class, operations can be performed such
+     * as connecting/disconnecting printer and executing print jobs. It generates a JposException
+     * when an error occurs while performing a specific function.
+     */
     private fun createPosPrinter(
             context: Context,
-            printerStatusReceiver: PrinterStatusReceiver
+            printerStatusReceiver: PrinterStatusReceiver?
     ): Result<POSPrinter> {
         return try {
             Result.success(POSPrinter(context).apply {
-                addStatusUpdateListener(printerStatusReceiver)
-                addErrorListener(printerStatusReceiver)
-                addOutputCompleteListener(printerStatusReceiver)
-                addDirectIOListener(printerStatusReceiver)
+                printerStatusReceiver?.let {
+                    addStatusUpdateListener(it)
+                    addErrorListener(it)
+                    addOutputCompleteListener(it)
+                    addDirectIOListener(it)
+                }
             })
         } catch (e: Throwable) {
             Result.failure(e)
         }
     }
 
+    /**
+     * This is a class to save device setting information to be connected. The setting information
+     * manages device information through the BXLConfigLoader Class. The setting information
+     * includes the device name, product name, interface, etc., and if the information is not saved
+     * normally, the device cannot be connected. Before calling the Open function, this class must
+     * be called to save the setting information.
+     */
     private fun createBxlConfigLoader(
             context: Context,
             deviceName: DeviceName,
