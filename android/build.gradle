@@ -25,6 +25,7 @@ android {
         targetSdkVersion 22
         versionCode 1
         versionName "1.0"
+        multiDexEnabled true
     }
     lintOptions {
         abortOnError false
@@ -46,6 +47,8 @@ repositories {
 dependencies {
     compile 'com.facebook.react:react-native:+'
     
+    compile 'com.android.support:multidex:1.0.3'
+
     implementation files('libs/jpos118-controls.jar')
     implementation files('libs/bixolon_printer_v130.jar')
     implementation files('libs/xerces.jar')
