@@ -144,6 +144,7 @@ class RNBixolonPrinterModule(
         } else {
             GlobalScope.launch {
                 val result = session.close()
+                activePrinterSession = null
                 callback.invoke(result.toRnArgs())
             }
         }
