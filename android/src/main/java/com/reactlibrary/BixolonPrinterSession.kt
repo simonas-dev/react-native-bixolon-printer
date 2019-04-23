@@ -1,7 +1,6 @@
 package com.reactlibrary
 
 import com.reactlibrary.consts.Alignment
-import jpos.JposException
 import jpos.POSPrinter
 import jpos.POSPrinterConst
 
@@ -18,7 +17,7 @@ class BixolonPrinterSession(
                 posPrinter.deviceEnabled = false
                 posPrinter.close()
             }
-        } catch (e: JposException) {
+        } catch (e: Throwable) {
             e.printStackTrace()
             return Result.failure(e)
         }
@@ -45,7 +44,7 @@ class BixolonPrinterSession(
             val width: Int = posPrinter.recLineWidth
             val station: Int = POSPrinterConst.PTR_S_RECEIPT
             posPrinter.printPDF(station, filePath, width, alignment.value, page, brightness)
-        } catch (e: JposException) {
+        } catch (e: Throwable) {
             e.printStackTrace()
             return Result.failure(e)
         }
