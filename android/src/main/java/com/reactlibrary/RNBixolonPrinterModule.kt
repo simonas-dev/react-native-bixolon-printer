@@ -55,6 +55,10 @@ class RNBixolonPrinterModule(
      */
     @ReactMethod
     fun connect(logicalName: String, address: String, callback: Callback) {
+        if (activePrinterSession != null) {
+            callback(Result.failure<Unit>("Disconnect first!").toRnArgs())  
+            return
+        }
         GlobalScope.launch(Dispatchers.IO) {
             val result = BixolonPrinter().open(
                     context = appContext,
@@ -80,6 +84,10 @@ class RNBixolonPrinterModule(
      */
     @ReactMethod
     fun autoConnect(callback: Callback) {
+        if (activePrinterSession != null) {
+            callback(Result.failure<Unit>("Disconnect first!").toRnArgs())
+            return
+        }
         GlobalScope.launch(Dispatchers.IO) {
             val result = BixolonPrinter().autoOpen(
                     context = appContext,
