@@ -1,14 +1,6 @@
 
 # react-native-bixolon-printer
 
-## Getting started
-
-`$ npm install react-native-bixolon-printer --save`
-
-### Mostly automatic installation
-
-`$ react-native link react-native-bixolon-printer`
-
 ### Manual installation
 
 
